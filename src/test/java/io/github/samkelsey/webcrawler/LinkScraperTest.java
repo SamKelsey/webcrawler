@@ -2,11 +2,8 @@ package io.github.samkelsey.webcrawler;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.net.URL;
@@ -16,7 +13,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(MockitoExtension.class)
 public class LinkScraperTest {
 
     // Check for duplicates and same domain only.
