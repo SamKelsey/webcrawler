@@ -2,6 +2,7 @@ package io.github.samkelsey.webcrawler;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -21,7 +22,7 @@ public class LinkScraperTest {
     void whenGetValidLinks_shouldReturn(String startingUrl) throws IOException {
         LinkScraper linkScraper = new LinkScraper(new URL(startingUrl));
 
-        Set<String> actual =  linkScraper.getValidLinks(createSampleDocument());
+        Set<String> actual =  linkScraper.getValidLinks(createDocument());
 
         Set<String> expected = new HashSet<>(Arrays.asList(
                 "https://www.monzo.com",
@@ -31,22 +32,40 @@ public class LinkScraperTest {
         assertEquals(expected, actual);
     }
 
-    private Document createSampleDocument() {
+    // Checks if there is a link that begins with "/" then the root domain is correctly prepended.
+    @ParameterizedTest
+    @ValueSource(strings = {"https://www.monzo.com", "https://www.monzo.com/"})
+    void whenGetValidLinks_shouldPrependDomain(String rootUrl) throws IOException {
+        LinkScraper linkScraper = new LinkScraper(new URL(rootUrl));
+
+        Set<String> actual =  linkScraper.getValidLinks(createDocument("/should-work"));
+
+        Set<String> expected = new HashSet<>(Arrays.asList(
+                "https://www.monzo.com/should-work")
+        );
+        assertEquals(expected, actual);
+    }
+
+    private Document createDocument(String... links) {
         Document doc = Document.createShell("test");
         Element body = doc.body();
-        appendLink(body, "https://www.monzo.com");
-        appendLink(body, "https://www.monzo.com/banking");
-        appendLink(body, "https://monzo.com/banking");
-        appendLink(body, "https://monzo.com/banking");
-        appendLink(body, "www.monzo.com/banking");
-        appendLink(body, "https://fail.monzo.com/");
+
+        for (String s : links) {
+            Element link = new Element("a").attr("href", s);
+            body.appendChild(link);
+        }
 
         return doc;
     }
 
-    private void appendLink(Element parent, String url) {
-        Element link = new Element("a").attr("href", url);
-        parent.appendChild(link);
+    private Document createDocument() {
+        return createDocument(
+                "https://www.monzo.com",
+                "https://www.monzo.com/banking",
+                "https://monzo.com/banking",
+                "https://monzo.com/banking",
+                "https://fail.monzo.com/",
+                "www.monzo.com/banking"
+        );
     }
-
 }

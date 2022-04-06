@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,8 +17,13 @@ public class WebCrawler {
     private final static Set<String> visitedLinks = new HashSet<>();
     private static final Logger log = LoggerFactory.getLogger(WebCrawler.class);
 
-    public void crawl(String startingLink) throws InterruptedException {
-        log.info("Starting crawling");
+    public static void main(String[] args) throws InterruptedException {
+        if (args.length != 1) {
+            throw new IllegalArgumentException("Invalid starting url argument provided.");
+        }
+
+        String startingLink = args[0];
+        log.info("Starting crawl for {}", startingLink);
         addLink(startingLink);
 
         // TODO: Timeout time needs thought through.
@@ -25,14 +31,22 @@ public class WebCrawler {
     }
 
     // Add a new task to the executor
-    public static void addLink(String link) {
+    public synchronized static void addLink(String link) {
         // TODO:
         //  Check link hasn't already been visited before adding.
         //  Add link to a set of already visited links.
+
+        if (visitedLinks.contains(link)) {
+            return;
+        }
+
+        visitedLinks.add(link);
+
         try {
             executorService.execute(new CrawlerThread(link));
         } catch (MalformedURLException e) {
-            log.warn("Skipping adding link due to malformed url: {}", e.getMessage());
+            log.warn("Skipping link due to malformed url: {}", link);
+            visitedLinks.remove(link);
         }
     }
 }

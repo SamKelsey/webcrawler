@@ -22,41 +22,51 @@ public class LinkScraper {
     }
 
     public Document fetchPage() throws IOException {
-        log.info("Starting to scrape: {}", url);
+        log.debug("Fetching page: {}", url);
         return Jsoup.connect(url.toString()).get();
     }
 
     public Set<String> getValidLinks(Document page) {
-        return page.select("a[href]").stream()
+        Set<String> validLinks = page.select("a[href]").stream()
                 .map(link -> link.attr("href"))
+                .distinct()
+                .map(this::prependDomain)
                 .filter(this::isValidDomain)
                 .collect(Collectors.toSet());
-    }
 
-    // TODO: Test this?
-    public void logFoundLinks(Set<String> links) {
         log.info("Successfully scraped {} and found the following valid links: {}",
                 url,
-                links.toString()
+                validLinks
         );
+
+        return validLinks;
     }
 
     private boolean isValidDomain(String link) {
-        boolean result = false;
+        boolean result = true;
         URL newUrl;
 
         try {
             newUrl = new URL(link);
 
-            if (isSameDomain(newUrl)) {
-                log.debug("Incorrect domain: {}", link);
-                result = true;
+            if (!isSameDomain(newUrl)) {
+                log.debug("Incorrect domain: {}, Root domain: {}", newUrl.getHost(), url.getHost());
+                result = false;
             }
         } catch (MalformedURLException e) {
             log.debug("Invalid url: {}", link);
+            result = false;
         }
 
         return result;
+    }
+
+    private String prependDomain(String link) {
+        if (link.charAt(0) != '/') {
+            return link;
+        }
+        String rootUrl = url.toString();
+        return rootUrl.endsWith("/") ? rootUrl + link.substring(1) : rootUrl + link;
     }
 
     private boolean isSameDomain(URL newUrl) {

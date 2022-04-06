@@ -28,14 +28,14 @@ public class CrawlerThread extends Thread {
         try {
             Document page = linkScraper.fetchPage();
             Set<String> links = linkScraper.getValidLinks(page);
-            linkScraper.logFoundLinks(links);
 
-            // pass links to queue
             links.forEach(WebCrawler::addLink);
-
         } catch (IOException e) {
-            // TODO: Be specific about what errors to catch and how to handle them.
-            log.warn(e.getMessage());
+            log.warn(
+                    "Skipping link {}, due to error fetching: {}",
+                    startingLink,
+                    e.getMessage()
+            );
         }
     }
 }
