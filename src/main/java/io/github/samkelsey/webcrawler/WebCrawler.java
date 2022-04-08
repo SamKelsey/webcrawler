@@ -1,7 +1,11 @@
 package io.github.samkelsey.webcrawler;
 
+import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class WebCrawler {
 
@@ -12,10 +16,14 @@ public class WebCrawler {
             throw new IllegalArgumentException("Invalid starting url argument provided.");
         }
 
-        String startingLink = args[0];
-        log.info("Starting crawl for {}", startingLink);
-        ThreadController controller = ThreadController.buildDefaultThreadController(startingLink);
+        try {
+            URL startingLink = new URL(args[0]);
+            log.info("Starting crawl for {}", startingLink);
+            ThreadController<LinkCrawler> controller = ThreadController.buildDefaultThreadController(startingLink);
 
-        controller.beginCrawling();
+            controller.beginCrawling();
+        } catch (MalformedURLException e) {
+            log.error("Invalid starting url provided {}", args[0]);
+        }
     }
 }

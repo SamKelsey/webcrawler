@@ -1,6 +1,7 @@
 package io.github.samkelsey.webcrawler;
 
 import io.github.samkelsey.webcrawler.crawler.Crawler;
+import io.github.samkelsey.webcrawler.crawler.CrawlerSupplier;
 import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +28,23 @@ public class ThreadController<T extends Crawler> {
 
     private final Set<Future<Set<String>>> runningTasks = new HashSet<>();
     private final ExecutorService executorService;
-    private final Class<T> crawlerType;
+    private final CrawlerSupplier<T> crawlerSupplier;
     private final Set<String> visitedLinks = new HashSet<>();
-    private final String rootUrl;
+    private final URL rootUrl;
 
-    public ThreadController(String rootUrl, ExecutorService executorService, Class<T> crawlerType) {
+    private static final int DEFAULT_NUMBER_THREADS = 3;
+
+    public ThreadController(URL rootUrl, ExecutorService executorService, CrawlerSupplier<T> crawlerSupplier) {
         this.rootUrl = rootUrl;
         this.executorService = executorService;
-        this.crawlerType = crawlerType;
+        this.crawlerSupplier = crawlerSupplier;
     }
 
-    public static ThreadController<LinkCrawler> buildDefaultThreadController(String rootUrl) {
+    public static ThreadController<LinkCrawler> buildDefaultThreadController(URL rootUrl) {
         return new ThreadController<>(
                 rootUrl,
-                Executors.newFixedThreadPool(3),
-                LinkCrawler.class
+                Executors.newFixedThreadPool(DEFAULT_NUMBER_THREADS),
+                (URL link) -> new LinkCrawler(new LinkScraper(link))
         );
     }
 
@@ -52,12 +55,17 @@ public class ThreadController<T extends Crawler> {
 
         while (finishedTasks.size() != 0 || runningTasks.size() != 0) {
             for (Set<String> finishedTask : finishedTasks) {
-                finishedTask.forEach(newLink -> {
-                    Future<Set<String>> newTask = addLinkToExecutor(newLink);
-                    if (newTask == null) {
-                        return;
+                finishedTask.forEach(rawLink -> {
+                    try {
+                        URL newUrl = new URL(rawLink);
+                        Future<Set<String>> newTask = addLinkToExecutor(newUrl);
+                        if (newTask == null) {
+                            return;
+                        }
+                        runningTasks.add(newTask);
+                    } catch (MalformedURLException e) {
+                        log.warn("Skipping link due to malformed url: {}", rawLink);
                     }
-                    runningTasks.add(newTask);
                 });
             }
 
@@ -71,28 +79,19 @@ public class ThreadController<T extends Crawler> {
     }
 
     /**
-     * Adds a thread to the executor crawling the given link. Updates the crawled links set.
+     * Adds a thread to the executor for crawling the given link. Updates the crawled links set.
      * @param link Url to be crawled.
      * @return Task that is being processed by executor.
-     * Null if it fails to submit the task to the executor.
      */
-    private Future<Set<String>> addLinkToExecutor(String link) {
-        if (visitedLinks.contains(link)) {
+    private Future<Set<String>> addLinkToExecutor(URL link) {
+        if (visitedLinks.contains(link.toString())) {
             return null;
         }
 
-        visitedLinks.add(link);
+        visitedLinks.add(link.toString());
 
-        try {
-            URL url = new URL(link);
-            Callable<Set<String>> crawlerThread = createCrawler(new LinkScraper(url));
-            return executorService.submit(crawlerThread);
-        } catch (MalformedURLException e) {
-            log.warn("Skipping link due to malformed url: {}", link);
-            visitedLinks.remove(link);
-        }
-
-        return null;
+        Callable<Set<String>> crawlerThread = crawlerSupplier.get(link);
+        return executorService.submit(crawlerThread);
     }
 
     private Set<Set<String>> pollFinishedTasks() {
@@ -116,11 +115,12 @@ public class ThreadController<T extends Crawler> {
     }
 
     // TODO: Is there a better way of doing this?
-    private Crawler createCrawler(LinkScraper linkScraper) {
-        if (crawlerType == LinkCrawler.class) {
-            return new LinkCrawler(linkScraper);
-        } else {
-            throw new IllegalArgumentException(String.format("%s is not a recognised Crawler.", crawlerType));
-        }
-    }
+    //      - Can use .getConstructor(String.class).getInstance() but don't think I like this.
+//    private Crawler createCrawler(LinkScraper linkScraper) {
+//        if (crawlerSupplier == LinkCrawler.class) {
+//            return new LinkCrawler(linkScraper);
+//        } else {
+//            throw new IllegalArgumentException(String.format("%s is not a recognised Crawler.", crawlerSupplier));
+//        }
+//    }
 }

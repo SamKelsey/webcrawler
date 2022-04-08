@@ -1,13 +1,12 @@
-package io.github.samkelsey.webcrawler;
+package io.github.samkelsey.webcrawler.crawler;
 
-import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
+import io.github.samkelsey.webcrawler.LinkScraper;
+import io.github.samkelsey.webcrawler.TestUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -16,18 +15,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class CrawlerThreadTest {
+public class LinkCrawlerTest {
 
     @Test
     void whenCall_shouldReturnAllLinks() throws Exception {
         LinkScraper mockScraper = mock(LinkScraper.class);
-        when(mockScraper.getValidLinks(any())).thenReturn(getLinks());
+        when(mockScraper.getValidLinks(any())).thenReturn(TestUtils.getLinks());
         when(mockScraper.getUrl()).thenReturn(new URL("https://www.monzo.com"));
 
         Callable<Set<String>> thread = new LinkCrawler(mockScraper);
         Set<String> results = thread.call();
 
-        assertEquals(results, getLinks());
+        assertEquals(results, TestUtils.getLinks());
     }
 
     @Test
@@ -40,16 +39,5 @@ public class CrawlerThreadTest {
         Set<String> results = thread.call();
 
         assertEquals(results, Collections.emptySet());
-    }
-
-    private Set<String> getLinks() {
-        return new HashSet<>(Arrays.asList(
-                "https://www.monzo.com",
-                "https://www.monzo.com/banking",
-                "https://monzo.com/banking",
-                "https://monzo.com/banking",
-                "https://fail.monzo.com/",
-                "www.monzo.com/banking"
-        ));
     }
 }
