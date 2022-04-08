@@ -1,6 +1,5 @@
 package io.github.samkelsey.webcrawler;
 
-import io.github.samkelsey.webcrawler.crawler.Crawler;
 import io.github.samkelsey.webcrawler.crawler.CrawlerSupplier;
 import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
 import org.slf4j.Logger;
@@ -22,33 +21,34 @@ import java.util.stream.Collectors;
  * Responsible for deploying Crawler threads to find new links.
  * @param <T> Type of crawler to use.
  */
-public class ThreadController<T extends Crawler> {
+public class ThreadController {
 
     private final Logger log = LoggerFactory.getLogger(WebCrawler.class);
 
     private final Set<Future<Set<String>>> runningTasks = new HashSet<>();
     private final ExecutorService executorService;
-    private final CrawlerSupplier<T> crawlerSupplier;
+    private final CrawlerSupplier crawlerSupplier;
     private final Set<String> visitedLinks = new HashSet<>();
     private final URL rootUrl;
 
     private static final int DEFAULT_NUMBER_THREADS = 3;
 
-    public ThreadController(URL rootUrl, ExecutorService executorService, CrawlerSupplier<T> crawlerSupplier) {
+    public ThreadController(URL rootUrl, ExecutorService executorService, CrawlerSupplier crawlerSupplier) {
         this.rootUrl = rootUrl;
         this.executorService = executorService;
         this.crawlerSupplier = crawlerSupplier;
     }
 
-    public static ThreadController<LinkCrawler> buildDefaultThreadController(URL rootUrl) {
-        return new ThreadController<>(
+    public static ThreadController buildDefaultThreadController(URL rootUrl) {
+        return new ThreadController(
                 rootUrl,
                 Executors.newFixedThreadPool(DEFAULT_NUMBER_THREADS),
                 (URL link) -> new LinkCrawler(new LinkScraper(link))
         );
     }
 
-    public void beginCrawling() throws InterruptedException {
+    // TODO: Do I need synchronized here?
+    public synchronized boolean beginCrawling() throws InterruptedException {
         Future<Set<String>> task = addLinkToExecutor(rootUrl);
         runningTasks.add(task);
         Set<Set<String>> finishedTasks = pollFinishedTasks();
@@ -60,6 +60,7 @@ public class ThreadController<T extends Crawler> {
                         URL newUrl = new URL(rawLink);
                         Future<Set<String>> newTask = addLinkToExecutor(newUrl);
                         if (newTask == null) {
+                            log.warn("Skipping link due that's already visited: {}.", rawLink);
                             return;
                         }
                         runningTasks.add(newTask);
@@ -73,15 +74,13 @@ public class ThreadController<T extends Crawler> {
         }
 
         executorService.shutdown();
-        executorService.awaitTermination(10, TimeUnit.SECONDS);
-
-        log.info("Crawling complete");
+        return executorService.awaitTermination(10, TimeUnit.SECONDS);
     }
 
     /**
      * Adds a thread to the executor for crawling the given link. Updates the crawled links set.
      * @param link Url to be crawled.
-     * @return Task that is being processed by executor.
+     * @return Task that is being processed by executor. Null link has already been visited.
      */
     private Future<Set<String>> addLinkToExecutor(URL link) {
         if (visitedLinks.contains(link.toString())) {

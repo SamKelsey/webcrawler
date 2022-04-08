@@ -1,6 +1,5 @@
 package io.github.samkelsey.webcrawler;
 
-import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +18,14 @@ public class WebCrawler {
         try {
             URL startingLink = new URL(args[0]);
             log.info("Starting crawl for {}", startingLink);
-            ThreadController<LinkCrawler> controller = ThreadController.buildDefaultThreadController(startingLink);
+            ThreadController controller = ThreadController.buildDefaultThreadController(startingLink);
 
-            controller.beginCrawling();
+            boolean result = controller.beginCrawling();
+            if (result) {
+                log.info("Crawling successfully completed");
+            } else {
+                log.info("Executor did not successfully shutdown, some links may not have been scraped.");
+            }
         } catch (MalformedURLException e) {
             log.error("Invalid starting url provided {}", args[0]);
         }

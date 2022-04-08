@@ -3,8 +3,8 @@ package io.github.samkelsey.webcrawler.crawler;
 import java.net.URL;
 
 @FunctionalInterface
-public interface CrawlerSupplier<T extends Crawler> {
+public interface CrawlerSupplier {
 
-    T get(URL url);
+    Crawler get(URL url);
 
 }

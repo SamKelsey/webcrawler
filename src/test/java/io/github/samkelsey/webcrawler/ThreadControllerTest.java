@@ -3,53 +3,62 @@ package io.github.samkelsey.webcrawler;
 import io.github.samkelsey.webcrawler.crawler.Crawler;
 import io.github.samkelsey.webcrawler.crawler.CrawlerSupplier;
 import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ThreadControllerTest {
 
+    private static URL rootUrl;
+
+    private static Crawler mockCrawler;
+    private static CrawlerSupplier supplier;
+    private static ExecutorService spyExecutor;
+
+    @BeforeAll
+    public static void init() throws MalformedURLException {
+        rootUrl = new URL("https://www.monzo.com");
+
+        mockCrawler = mock(LinkCrawler.class);
+        supplier = (URL url) -> mockCrawler;
+
+        ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        spyExecutor = spy(executorService);
+    }
 
     @Test
     void whenBeginCrawling_everyTaskSubmittedToExecutor() throws Exception {
-        ExecutorService mockExecutorService = mock(ExecutorService.class);
-        Crawler mockCrawler = mock(LinkCrawler.class);
         when(mockCrawler.call())
                 .thenReturn(TestUtils.getLinks())
                 .thenReturn(Collections.emptySet());
 
-        CrawlerSupplier<Crawler> supplier = (URL url) -> mockCrawler;
-        URL rootUrl = new URL("https://www.monzo.com");
-
-        ThreadController<Crawler> controller = new ThreadController<>(
-                rootUrl,
-                mockExecutorService,
-                supplier
-        );
-
+        ThreadController controller = new ThreadController(rootUrl, spyExecutor, supplier);
         controller.beginCrawling();
 
-        // Verify executor.submit is called for root and all of the getLinks links once each.
-        ArgumentCaptor<Callable<Set<String>>> arguments = ArgumentCaptor.forClass(Callable.class);
-
-        verify(mockExecutorService).submit(arguments.capture());
-
-
+        verify(spyExecutor, times(4)).submit(mockCrawler);
     }
 
-    // When fail to submit task to executor, the null return isn't added to running tasks.
+    // When future.get() throws an error for getting the completed task throws an error, an empty set should be returned.
     @Test
-    void whenExecutorSubmitFails_nullTaskNotQueued() {
+    void whenTaskException_emptySetReturned() throws Exception {
+        when(mockCrawler.call()).thenThrow(ExecutionException.class);
 
+        ThreadController controller = new ThreadController(rootUrl, spyExecutor, supplier);
+        controller.beginCrawling();
+
+        verify(spyExecutor, times(1)).submit(mockCrawler);
     }
 
     @Test
