@@ -28,6 +28,7 @@ public class WebCrawler {
             }
         } catch (MalformedURLException e) {
             log.error("Invalid starting url provided {}", args[0]);
+            throw new IllegalArgumentException(String.format("Invalid url provided: %s", args[0]), e);
         }
     }
 }

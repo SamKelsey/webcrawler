@@ -27,6 +27,7 @@ public class LinkCrawler extends Crawler {
             foundLinks.addAll(linkScraper.getValidLinks(page));
         } catch (IOException e) {
             log.warn(
+
                     "Skipping link {}, due to error fetching: {}",
                     startingLink,
                     e.getMessage()

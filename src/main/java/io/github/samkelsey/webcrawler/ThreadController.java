@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 /**
  * Responsible for deploying Crawler threads to find new links.
- * @param <T> Type of crawler to use.
  */
 public class ThreadController {
 
@@ -47,8 +46,7 @@ public class ThreadController {
         );
     }
 
-    // TODO: Do I need synchronized here?
-    public synchronized boolean beginCrawling() throws InterruptedException {
+    public boolean beginCrawling() throws InterruptedException {
         Future<Set<String>> task = addLinkToExecutor(rootUrl);
         runningTasks.add(task);
         Set<Set<String>> finishedTasks = pollFinishedTasks();
@@ -78,7 +76,8 @@ public class ThreadController {
     }
 
     /**
-     * Adds a thread to the executor for crawling the given link. Updates the crawled links set.
+     * Submits a {@link io.github.samkelsey.webcrawler.crawler.Crawler} to the executor for crawling the given link.
+     * Updates the visited links set.
      * @param link Url to be crawled.
      * @return Task that is being processed by executor. Null link has already been visited.
      */
@@ -112,14 +111,4 @@ public class ThreadController {
         runningTasks.removeIf(Future::isDone);
         return finishedTasks;
     }
-
-    // TODO: Is there a better way of doing this?
-    //      - Can use .getConstructor(String.class).getInstance() but don't think I like this.
-//    private Crawler createCrawler(LinkScraper linkScraper) {
-//        if (crawlerSupplier == LinkCrawler.class) {
-//            return new LinkCrawler(linkScraper);
-//        } else {
-//            throw new IllegalArgumentException(String.format("%s is not a recognised Crawler.", crawlerSupplier));
-//        }
-//    }
 }

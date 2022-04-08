@@ -25,7 +25,6 @@ public class ThreadControllerTest {
 
     private static Crawler mockCrawler;
     private static CrawlerSupplier supplier;
-    private static ExecutorService spyExecutor;
 
     @BeforeAll
     public static void init() throws MalformedURLException {
@@ -33,9 +32,6 @@ public class ThreadControllerTest {
 
         mockCrawler = mock(LinkCrawler.class);
         supplier = (URL url) -> mockCrawler;
-
-        ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        spyExecutor = spy(executorService);
     }
 
     @Test
@@ -43,6 +39,9 @@ public class ThreadControllerTest {
         when(mockCrawler.call())
                 .thenReturn(TestUtils.getLinks())
                 .thenReturn(Collections.emptySet());
+
+        ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        ExecutorService spyExecutor = spy(executorService);
 
         ThreadController controller = new ThreadController(rootUrl, spyExecutor, supplier);
         controller.beginCrawling();
@@ -55,19 +54,12 @@ public class ThreadControllerTest {
     void whenTaskException_emptySetReturned() throws Exception {
         when(mockCrawler.call()).thenThrow(ExecutionException.class);
 
+        ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        ExecutorService spyExecutor = spy(executorService);
+
         ThreadController controller = new ThreadController(rootUrl, spyExecutor, supplier);
         controller.beginCrawling();
 
         verify(spyExecutor, times(1)).submit(mockCrawler);
-    }
-
-    @Test
-    void whenTasksAndQueueEmpty_completes() {
-
-    }
-
-    @Test
-    void whenBeginCrawlingCompletes_executorShutsDown() {
-
     }
 }

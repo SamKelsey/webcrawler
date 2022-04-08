@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Responsible for providing methods to easily scrape valid links
+ * Responsible for providing methods to scrape links
  * from a given url.
  */
 public class LinkScraper {
