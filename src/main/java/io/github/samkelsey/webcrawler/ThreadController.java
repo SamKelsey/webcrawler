@@ -64,7 +64,7 @@ public class ThreadController {
                         URL newUrl = new URL(rawLink);
                         Future<Set<String>> newTask = addLinkToExecutor(newUrl);
                         if (newTask == null) {
-                            log.warn("Skipping link due that's already visited: {}.", rawLink);
+                            log.warn("Skipping link that has already been visited: {}.", rawLink);
                             return;
                         }
                         runningTasks.add(newTask);
