@@ -1,7 +1,8 @@
 package io.github.samkelsey.webcrawler.crawler;
 
-import io.github.samkelsey.webcrawler.LinkScraper;
 import io.github.samkelsey.webcrawler.TestUtils;
+import io.github.samkelsey.webcrawler.scraper.LinkScraper;
+import io.github.samkelsey.webcrawler.scraper.Scraper;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,24 +20,24 @@ public class LinkCrawlerTest {
 
     @Test
     void whenCall_shouldReturnAllLinks() throws Exception {
-        LinkScraper mockScraper = mock(LinkScraper.class);
-        when(mockScraper.getValidLinks(any())).thenReturn(TestUtils.getLinks());
+        Scraper mockScraper = mock(LinkScraper.class);
+        when(mockScraper.getData(any())).thenReturn(TestUtils.getLinks());
         when(mockScraper.getUrl()).thenReturn(new URL("https://www.monzo.com"));
 
-        Callable<Set<String>> thread = new LinkCrawler(mockScraper);
-        Set<String> results = thread.call();
+        Callable<Set<String>> callable = new LinkCrawler(mockScraper);
+        Set<String> results = callable.call();
 
         assertEquals(results, TestUtils.getLinks());
     }
 
     @Test
     void whenCallException_shouldReturnEmptySet() throws Exception {
-        LinkScraper mockScraper = mock(LinkScraper.class);
+        Scraper mockScraper = mock(LinkScraper.class);
         when(mockScraper.getUrl()).thenReturn(new URL("https://www.monzo.com"));
         when(mockScraper.fetchPage()).thenThrow(new IOException("failure"));
 
-        Callable<Set<String>> thread = new LinkCrawler(mockScraper);
-        Set<String> results = thread.call();
+        Callable<Set<String>> callable = new LinkCrawler(mockScraper);
+        Set<String> results = callable.call();
 
         assertEquals(results, Collections.emptySet());
     }

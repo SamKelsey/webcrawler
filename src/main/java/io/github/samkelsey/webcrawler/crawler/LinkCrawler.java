@@ -1,6 +1,7 @@
 package io.github.samkelsey.webcrawler.crawler;
 
-import io.github.samkelsey.webcrawler.LinkScraper;
+import io.github.samkelsey.webcrawler.scraper.LinkScraper;
+import io.github.samkelsey.webcrawler.scraper.Scraper;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
@@ -13,8 +14,8 @@ import java.util.Set;
  */
 public class LinkCrawler extends Crawler {
 
-    public LinkCrawler(LinkScraper linkScraper) {
-        super(linkScraper);
+    public LinkCrawler(Scraper scraper) {
+        super(scraper);
     }
 
     @Override
@@ -23,8 +24,8 @@ public class LinkCrawler extends Crawler {
         Set<String> foundLinks = new HashSet<>();
 
         try {
-            Document page = linkScraper.fetchPage();
-            foundLinks.addAll(linkScraper.getValidLinks(page));
+            Document page = scraper.fetchPage();
+            foundLinks.addAll(scraper.getData(page));
         } catch (IOException e) {
             log.warn(
 

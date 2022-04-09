@@ -1,6 +1,6 @@
 package io.github.samkelsey.webcrawler.crawler;
 
-import io.github.samkelsey.webcrawler.LinkScraper;
+import io.github.samkelsey.webcrawler.scraper.Scraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,11 +14,11 @@ import java.util.concurrent.Callable;
 public abstract class Crawler implements Callable<Set<String>> {
 
     protected final String startingLink;
-    protected final LinkScraper linkScraper;
+    protected final Scraper scraper;
     protected final Logger log = LoggerFactory.getLogger(LinkCrawler.class);
 
-    public Crawler(LinkScraper linkScraper) {
-        this.linkScraper = linkScraper;
-        this.startingLink = linkScraper.getUrl().toString();
+    public Crawler(Scraper scraper) {
+        this.scraper = scraper;
+        this.startingLink = scraper.getUrl().toString();
     }
 }

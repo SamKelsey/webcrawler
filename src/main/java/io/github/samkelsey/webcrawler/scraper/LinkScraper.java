@@ -1,11 +1,7 @@
-package io.github.samkelsey.webcrawler;
+package io.github.samkelsey.webcrawler.scraper;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
@@ -15,21 +11,19 @@ import java.util.stream.Collectors;
  * Responsible for providing methods to scrape links
  * from a given url.
  */
-public class LinkScraper {
+public class LinkScraper extends Scraper {
 
-    private final URL url;
-    private final Logger log = LoggerFactory.getLogger(LinkScraper.class);
 
     public LinkScraper(URL url) {
-        this.url = url;
+        super(url);
     }
 
-    public Document fetchPage() throws IOException {
-        log.debug("Fetching page: {}", url);
-        return Jsoup.connect(url.toString()).get();
-    }
-
-    public Set<String> getValidLinks(Document page) {
+    /**
+     * Selects the href values of all links in the provided document.
+     * @param page The document to be searched for links.
+     * @return A set of the found href values.
+     */
+    public Set<String> getData(Document page) {
         Set<String> validLinks = page.select("a[href]").stream()
                 .map(link -> link.attr("href"))
                 .distinct()
@@ -64,6 +58,12 @@ public class LinkScraper {
         return result;
     }
 
+    /**
+     * Checks if a link's href begins with a '/'.
+     * If so, it prepends the root domain to the link, making it a valid url.
+     * @param link Raw url to be checked/amended
+     * @return The amended version of the provided url.
+     */
     private String prependDomain(String link) {
         if (link.charAt(0) != '/') {
 
@@ -81,9 +81,5 @@ public class LinkScraper {
         } catch (IndexOutOfBoundsException e) {
             return false;
         }
-    }
-
-    public URL getUrl() {
-        return this.url;
     }
 }

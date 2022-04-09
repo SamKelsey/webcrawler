@@ -1,8 +1,7 @@
-package io.github.samkelsey.webcrawler;
+package io.github.samkelsey.webcrawler.scraper;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -16,13 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LinkScraperTest {
 
-    // Check for duplicates and same domain only.
     @ParameterizedTest
     @ValueSource(strings = {"https://www.monzo.com", "https://monzo.com"})
     void whenGetValidLinks_shouldReturn(String startingUrl) throws IOException {
-        LinkScraper linkScraper = new LinkScraper(new URL(startingUrl));
+        Scraper linkScraper = new LinkScraper(new URL(startingUrl));
 
-        Set<String> actual =  linkScraper.getValidLinks(createDocument());
+        Set<String> actual =  linkScraper.getData(createDocument());
 
         Set<String> expected = new HashSet<>(Arrays.asList(
                 "https://www.monzo.com",
@@ -32,13 +30,12 @@ public class LinkScraperTest {
         assertEquals(expected, actual);
     }
 
-    // Checks if there is a link that begins with "/" then the root domain is correctly prepended.
     @ParameterizedTest
     @ValueSource(strings = {"https://www.monzo.com", "https://www.monzo.com/"})
     void whenGetValidLinks_shouldPrependDomain(String rootUrl) throws IOException {
-        LinkScraper linkScraper = new LinkScraper(new URL(rootUrl));
+        Scraper linkScraper = new LinkScraper(new URL(rootUrl));
 
-        Set<String> actual =  linkScraper.getValidLinks(createDocument("/should-work"));
+        Set<String> actual =  linkScraper.getData(createDocument("/should-work"));
 
         Set<String> expected = new HashSet<>(Arrays.asList(
                 "https://www.monzo.com/should-work")

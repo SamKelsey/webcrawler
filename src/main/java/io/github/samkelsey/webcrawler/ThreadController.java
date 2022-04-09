@@ -2,6 +2,7 @@ package io.github.samkelsey.webcrawler;
 
 import io.github.samkelsey.webcrawler.crawler.CrawlerSupplier;
 import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
+import io.github.samkelsey.webcrawler.scraper.LinkScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,11 @@ public class ThreadController {
         );
     }
 
+    /**
+     * Entrypoint to start crawling, starting from the rootUrl provided in instantiation.
+     * @return Whether the crawler successfully managed to complete all threads before terminating.
+     * @throws InterruptedException If the executor is interrupted whilst waiting to terminate.
+     */
     public boolean beginCrawling() throws InterruptedException {
         Future<Set<String>> task = addLinkToExecutor(rootUrl);
         runningTasks.add(task);
@@ -92,6 +98,12 @@ public class ThreadController {
         return executorService.submit(crawlerThread);
     }
 
+    /**
+     * Polls the currently running tasks set for finished tasks.
+     * Completed tasks are removed from the running tasks set.
+     * @return A {@link Set} of completed tasks.
+     * An empty set is returned if no completed tasks are found.
+     */
     private Set<Set<String>> pollFinishedTasks() {
         Set<Set<String>> finishedTasks = runningTasks.stream()
                 .filter(Future::isDone)
