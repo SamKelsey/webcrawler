@@ -66,7 +66,6 @@ public class LinkScraper extends Scraper {
      */
     private String prependDomain(String link) {
         if (link.charAt(0) != '/') {
-
             return link;
         }
         String rootUrl = url.toString();

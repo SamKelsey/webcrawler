@@ -1,5 +1,6 @@
 package io.github.samkelsey.webcrawler;
 
+import io.github.samkelsey.webcrawler.crawler.Crawler;
 import io.github.samkelsey.webcrawler.crawler.CrawlerSupplier;
 import io.github.samkelsey.webcrawler.crawler.LinkCrawler;
 import io.github.samkelsey.webcrawler.scraper.LinkScraper;
@@ -10,7 +11,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,12 +43,12 @@ public class ThreadController {
         return new ThreadController(
                 rootUrl,
                 Executors.newFixedThreadPool(DEFAULT_NUMBER_THREADS),
-                (URL link) -> new LinkCrawler(new LinkScraper(link))
+                (link) -> new LinkCrawler(new LinkScraper(link))
         );
     }
 
     /**
-     * Entrypoint to start crawling, starting from the rootUrl provided in instantiation.
+     * Entrypoint to start crawling, starting from the <code>rootUrl</code> provided in instantiation.
      * @return Whether the crawler successfully managed to complete all threads before terminating.
      * @throws InterruptedException If the executor is interrupted whilst waiting to terminate.
      */
@@ -94,7 +94,7 @@ public class ThreadController {
 
         visitedLinks.add(link.toString());
 
-        Callable<Set<String>> crawlerThread = crawlerSupplier.get(link);
+        Crawler crawlerThread = crawlerSupplier.get(link);
         return executorService.submit(crawlerThread);
     }
 

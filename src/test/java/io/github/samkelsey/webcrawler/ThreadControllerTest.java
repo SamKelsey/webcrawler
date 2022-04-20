@@ -49,7 +49,6 @@ public class ThreadControllerTest {
         verify(spyExecutor, times(4)).submit(mockCrawler);
     }
 
-    // When future.get() throws an error for getting the completed task throws an error, an empty set should be returned.
     @Test
     void whenTaskException_emptySetReturned() throws Exception {
         when(mockCrawler.call()).thenThrow(ExecutionException.class);

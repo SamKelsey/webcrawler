@@ -15,7 +15,7 @@ public abstract class Crawler implements Callable<Set<String>> {
 
     protected final String startingLink;
     protected final Scraper scraper;
-    protected final Logger log = LoggerFactory.getLogger(LinkCrawler.class);
+    protected final Logger log = LoggerFactory.getLogger(Crawler.class);
 
     public Crawler(Scraper scraper) {
         this.scraper = scraper;
